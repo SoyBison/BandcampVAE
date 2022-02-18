@@ -253,9 +253,9 @@ def mass_get_artists(tar='./targets', ring_size=3):
 
 def collect_targets(tag, tar='./targets'):
     url = f'https://www.bandcamp.com/tag/{tag}'
-    options = webdriver.ChromeOptions()
+    options = webdriver.FirefoxOptions()
     options.add_argument('headless')
-    dr = webdriver.Chrome(options=options)
+    dr = webdriver.Firefox(options=options)
     dr.get(url)
     WebDriverWait(dr, 0.5)
     soup = BeautifulSoup(dr.page_source, 'html.parser')
