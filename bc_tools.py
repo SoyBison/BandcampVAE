@@ -254,7 +254,7 @@ def mass_get_artists(tar='./targets', ring_size=3):
 def collect_targets(tag, tar='./targets'):
     url = f'https://www.bandcamp.com/tag/{tag}'
     options = webdriver.FirefoxOptions()
-    options.add_argument('headless')
+    options.headless = True
     dr = webdriver.Firefox(options=options)
     dr.get(url)
     WebDriverWait(dr, 0.5)
@@ -268,9 +268,9 @@ def collect_targets(tag, tar='./targets'):
 
 if __name__ == '__main__':
     with open('tags', 'r') as tf:
-        tags = tf.readlines()
+        tags = tf.read().splitlines()
     for t in tags:
-        collect_targets(tags)
+        collect_targets(t)
     mass_get_artists()
     done = False
     while not done:
