@@ -116,7 +116,7 @@ def album_cover_scrape(cover_loc='./covers/', artist_loc='artist_tags'):
     pool = mp.Pool()
     worker = partial(get_album_covers, loc=cover_loc)
     artists = load_artist_tags(artist_loc)
-    tqdm(pool.imap(worker, artists))
+    tqdm(pool.imap(worker, artists), total=len(artists))
     return True
 
 
