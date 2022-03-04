@@ -267,11 +267,11 @@ def collect_targets(tag, tar='./targets'):
 
 
 if __name__ == '__main__':
-    with open('tags', 'r') as tf:
-        tags = tf.read().splitlines()
-    for t in tags:
-        collect_targets(t)
-    mass_get_artists()
+    # with open('tags', 'r') as tf:
+    #     tags = tf.read().splitlines()
+    # for t in tags:
+    #     collect_targets(t)
+    # mass_get_artists()
     done = False
     while not done:
         try:
