@@ -71,7 +71,10 @@ def get_album_covers(tag, loc='./covers/'):
     album_locs = []
     for a in albums:
         try:
-            album_locs.append(url + a['href'])
+            if url == a['href']:
+                continue
+            else:
+                album_locs.append(url + a['href'])
         except KeyError:
             pass
 
@@ -91,10 +94,10 @@ def get_album_covers(tag, loc='./covers/'):
         im = np.array(Image.open(img.raw))
 
         titlesec = soup.find('h2', class_='trackTitle')
-        artistsec = soup.find('span', itemprop='byArtist')
+        artistsec = soup.find('h3').find('span')
         tags = soup.find_all('a', class_='tag')
         tags = [tag.text.strip() for tag in tags]
-        album_title = re.findall('(?<=/)[a-z-_~0-9]*$', album)[0]
+        album_title = re.findall(r'(?<=/)[a-z-_~0-9]*(?=\?|$)', album)[0]
         data_dict = {'cover': im,
                      'title': titlesec.text.strip(),
                      'artist': artistsec.text.strip(),
@@ -110,13 +113,17 @@ def get_album_covers(tag, loc='./covers/'):
         num_covs = len(os.listdir(loc))
         print(f'{num_covs} album covers downloaded.')
         sys.stdout.write("\033[F")
+    return True
 
 
 def album_cover_scrape(cover_loc='./covers/', artist_loc='artist_tags'):
-    pool = mp.Pool()
+    # pool = mp.Pool()
     worker = partial(get_album_covers, loc=cover_loc)
     artists = load_artist_tags(artist_loc)
-    tqdm(pool.imap(worker, artists), total=len(artists))
+    # list(pool.imap(worker, artists))
+    for a in artists:
+        worker(a)
+        time.sleep(0.5)
     return True
 
 
@@ -272,10 +279,4 @@ if __name__ == '__main__':
     # for t in tags:
     #     collect_targets(t)
     # mass_get_artists()
-    done = False
-    while not done:
-        try:
-            done = album_cover_scrape(cover_loc='/home/coen/Remote/Data/bandcamp/covers')
-        except:
-            time.sleep(0.5)
-            pass
+    album_cover_scrape(cover_loc='/home/coen/Remote/Data/bandcamp/covers/')
