@@ -85,7 +85,7 @@ def get_album_covers(tag, loc='./covers/'):
         try:
             alb = requests.get(album)
         except requests.exceptions.ConnectionError:
-            time.sleep(60)
+            time.sleep(300)
             alb = requests.get(album)
         soup = BeautifulSoup(alb.text, 'html.parser')
         try:
