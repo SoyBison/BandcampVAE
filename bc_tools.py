@@ -86,6 +86,9 @@ def get_album_covers(tag, loc='./covers/'):
         soup = BeautifulSoup(alb.text, 'html.parser')
         try:
             art = soup.find('div', id='tralbumArt')
+            # Fucking noisecore artists trying to be twee by having an empty file as their album art ruining everything.
+            if art.find("div", id="missing-tralbum-art"):
+                continue
             imgloc = art.find('a')['href']
         except (KeyError, AttributeError):
             continue
