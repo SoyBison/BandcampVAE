@@ -110,7 +110,11 @@ def get_album_covers(tag, loc='./covers/'):
         artistsec = soup.find('h3').find('span')
         tags = soup.find_all('a', class_='tag')
         tags = [tag.text.strip() for tag in tags]
-        album_title = re.findall(r'(?<=/)[a-z-_~0-9]*(?=\?|$)', album)[0]
+        try:
+            album_title = re.findall(r'(?<=/)[a-z-_~0-9]*(?=\?|$)', album)[0]
+        except IndexError as e:
+            with open('error.log', 'a') as f:
+                f.write(f'Error parsing {album}:\n {e}')
         data_obj = Album(
             id=album_id.hex,
             artist=artistsec.text.strip(),
