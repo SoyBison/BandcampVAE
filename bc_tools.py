@@ -6,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import re
+import json
 import multiprocessing as mp
 from functools import partial
 import pickle
@@ -18,6 +19,8 @@ import seaborn as sns
 import colorsys
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
+from data import Album, Session
+import uuid
 import time
 
 BCAMPURL = 'https://{ARTIST}.bandcamp.com'
@@ -34,7 +37,7 @@ def add_artist_tag(tag, loc='artist_tags'):
         f.write(tag + '\n')
 
 
-def cowdog(earl, loc='artist_tags', loops=3, n=0):  # 'earl' like 'url'
+def cowdog(earl, loc='artist_tags', loops=4, n=0):  # 'earl' like 'url'
     """
     Collects names for you. Put in a release url as a starting point.
     """
@@ -52,8 +55,7 @@ def cowdog(earl, loc='artist_tags', loops=3, n=0):  # 'earl' like 'url'
         if tag not in knowns:
             add_artist_tag(tag, loc)
 
-    print(f' Current Artist Count: {len(knowns) - 1}')
-    sys.stdout.write("\033[F")
+    print(f'\rCurrent Artist Count: {len(knowns) - 1}')
     if n < loops:
         for album in urls:
             cowdog(album, loc, loops, n + 1)
@@ -78,9 +80,9 @@ def get_album_covers(tag, loc='./covers/'):
         except KeyError:
             pass
 
+    session = Session()
     for album in album_locs:
-        fname = loc + str(hash(album))
-        if os.path.exists(fname):
+        if list(session.query(Album.url).filter(Album.url == album)):
             continue
         try:
             alb = requests.get(album)
@@ -101,28 +103,29 @@ def get_album_covers(tag, loc='./covers/'):
             continue
         img = requests.get(imgloc, stream=True)
         img.raw.decode_content = True
-        im = np.array(Image.open(img.raw))
+        im = Image.open(img.raw)
+        album_id = uuid.uuid4()
 
         titlesec = soup.find('h2', class_='trackTitle')
         artistsec = soup.find('h3').find('span')
         tags = soup.find_all('a', class_='tag')
         tags = [tag.text.strip() for tag in tags]
         album_title = re.findall(r'(?<=/)[a-z-_~0-9]*(?=\?|$)', album)[0]
-        data_dict = {'cover': im,
-                     'title': titlesec.text.strip(),
-                     'artist': artistsec.text.strip(),
-                     'tags': tags,
-                     'album': album_title,
-                     'url': album,
-                     'store': tag}
-        if not os.path.exists(loc):
-            os.mkdir(loc)
-        with open(fname, 'bw+') as jar:
-            pickle.dump(data_dict, jar)
+        data_obj = Album(
+            id=album_id.hex,
+            artist=artistsec.text.strip(),
+            title=titlesec.text.strip(),
+            tags=json.dumps(tags),
+            url_title=album_title,
+            store=tag,
+            url=url
+        )
+        session.add(data_obj)
+        im.save(os.path.join(loc, album_id.hex + '.jpg'))
+        session.commit()
 
-        num_covs = len(os.listdir(loc))
-        print(f'{num_covs} album covers downloaded.')
-        sys.stdout.write("\033[F")
+        num_covs = session.query(Album.title).count()
+        print(f'\r{num_covs} album covers downloaded.')
     return True
 
 
