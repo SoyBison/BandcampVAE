@@ -115,6 +115,7 @@ def get_album_covers(tag, loc='./covers/'):
         except IndexError as e:
             with open('error.log', 'a') as f:
                 f.write(f'Error parsing {album}:\n {e}')
+            continue
         data_obj = Album(
             id=album_id.hex,
             artist=artistsec.text.strip(),
