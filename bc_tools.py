@@ -55,7 +55,7 @@ def cowdog(earl, loc='artist_tags', loops=4, n=0):  # 'earl' like 'url'
         if tag not in knowns:
             add_artist_tag(tag, loc)
 
-    print(f'\rCurrent Artist Count: {len(knowns) - 1}')
+    print(f'\rCurrent Artist Count: {len(knowns) - 1}', flush=True)
     if n < loops:
         for album in urls:
             cowdog(album, loc, loops, n + 1)
