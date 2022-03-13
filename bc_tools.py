@@ -13,7 +13,6 @@ import pickle
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-import sys
 import matplotlib.pyplot as plt
 import seaborn as sns
 import colorsys
@@ -110,7 +109,7 @@ def get_album_covers(tag, loc='./covers/'):
         tags = soup.find_all('a', class_='tag')
         tags = [tag.text.strip() for tag in tags]
         try:
-            album_title = re.findall(r'(?<=/)[a-z-_~0-9]*(?=\?|[$#])', album)[0]
+            album_title = re.findall(r'(?<=/)[a-z-_~0-9]*(?=[?#]|$)', album)[0]
         except IndexError as e:
             with open('error.log', 'a') as f:
                 f.write(f'Error parsing {album}:\n {e}')
