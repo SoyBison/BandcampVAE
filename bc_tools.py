@@ -55,7 +55,6 @@ def cowdog(earl, loc='artist_tags', loops=4, n=0):  # 'earl' like 'url'
         if tag not in knowns:
             add_artist_tag(tag, loc)
 
-    print(f'\rCurrent Artist Count: {len(knowns) - 1}', flush=True)
     if n < loops:
         for album in urls:
             cowdog(album, loc, loops, n + 1)
@@ -111,7 +110,7 @@ def get_album_covers(tag, loc='./covers/'):
         tags = soup.find_all('a', class_='tag')
         tags = [tag.text.strip() for tag in tags]
         try:
-            album_title = re.findall(r'(?<=/)[a-z-_~0-9]*(?=\?|$)', album)[0]
+            album_title = re.findall(r'(?<=/)[a-z-_~0-9]*(?=\?|[$#])', album)[0]
         except IndexError as e:
             with open('error.log', 'a') as f:
                 f.write(f'Error parsing {album}:\n {e}')
