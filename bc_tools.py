@@ -73,7 +73,7 @@ def get_album_covers(tag, loc='./covers/'):
         try:
             if url == a['href']:
                 continue
-            if url in a['href']:
+            if a['href'].startswith('https://'):
                 album_locs.append(a['href'])
             else:
                 album_locs.append(url + a['href'])
