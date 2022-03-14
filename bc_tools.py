@@ -73,6 +73,8 @@ def get_album_covers(tag, loc='./covers/'):
         try:
             if url == a['href']:
                 continue
+            if url in a['href']:
+                album_locs.append(a['href'])
             else:
                 album_locs.append(url + a['href'])
         except KeyError:
@@ -123,14 +125,12 @@ def get_album_covers(tag, loc='./covers/'):
             tags=json.dumps(tags),
             url_title=album_title,
             store=tag,
-            url=url
+            url=album
         )
         session.add(data_obj)
         im.save(os.path.join(loc, album_id.hex + '.jpg'))
         session.commit()
 
-        num_covs = session.query(Album.title).count()
-        print(f'\r{num_covs} album covers downloaded.')
     return True
 
 
@@ -139,7 +139,7 @@ def album_cover_scrape(cover_loc='./covers/', artist_loc='artist_tags'):
     worker = partial(get_album_covers, loc=cover_loc)
     artists = load_artist_tags(artist_loc)
     # list(pool.imap(worker, artists))
-    for a in artists:
+    for a in tqdm(artists):
         worker(a)
         time.sleep(0.5)
     return True
