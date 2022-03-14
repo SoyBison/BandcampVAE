@@ -84,7 +84,9 @@ def get_album_covers(tag, loc='./covers/'):
             continue
         try:
             alb = requests.get(album)
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError as e:
+            with open('error.log', 'a') as f:
+                f.write(f'Error reaching url: {album}\n {e}')
             time.sleep(300)
             try:
                 alb = requests.get(album)
