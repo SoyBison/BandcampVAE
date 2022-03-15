@@ -73,7 +73,7 @@ def get_album_covers(tag, loc='./covers/'):
         try:
             if url == a['href']:
                 continue
-            if a['href'].startswith('https://'):
+            if a['href'].startswith('http'):
                 album_locs.append(a['href'])
             else:
                 album_locs.append(url + a['href'])
@@ -88,12 +88,16 @@ def get_album_covers(tag, loc='./covers/'):
             alb = requests.get(album)
         except requests.exceptions.ConnectionError as e:
             with open('error.log', 'a') as f:
-                f.write(f'Error reaching url: {album}\n {e}')
+                f.write(f'Error reaching url: {album}\n {e}\n')
             time.sleep(300)
             try:
                 alb = requests.get(album)
             except requests.exceptions.ConnectionError:
                 continue
+        except requests.exceptions.InvalidURL:
+            with open('error.log', 'a') as f:
+                f.write(f'Invalid URL detected: {album}\n')
+            continue
         soup = BeautifulSoup(alb.text, 'html.parser')
         try:
             art = soup.find('div', id='tralbumArt')
