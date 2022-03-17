@@ -132,6 +132,8 @@ def get_album_covers(tag, loc='./covers/'):
             url=album
         )
         session.add(data_obj)
+        if im.mode != 'RGB':
+            im = im.convert('RGB')
         im.save(os.path.join(loc, album_id.hex + '.jpg'))
         session.commit()
 
