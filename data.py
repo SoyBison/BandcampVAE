@@ -21,9 +21,9 @@ class Album(Base):
     __tablename__ = 'albums'
 
     id = Column(String(255), primary_key=True, unique=True)
-    artist = Column(String(255))
-    title = Column(String(255))
-    tags = Column(String(255))
+    artist = Column(String(2048))
+    title = Column(String(2048))
+    tags = Column(String(1024))
     url_title = Column(String(255))
     store = Column(String(255))
     url = Column(String(255))
