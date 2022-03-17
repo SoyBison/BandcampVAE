@@ -1,6 +1,7 @@
 """
 A Cache of tools that collect data from bandcamp and do analysis.
 """
+import datetime
 
 import requests
 from bs4 import BeautifulSoup
@@ -18,9 +19,15 @@ import seaborn as sns
 import colorsys
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
-from data import Album, Session
+from data import Album, Session, Store
 import uuid
 import time
+import configparser
+
+
+config = configparser.ConfigParser()
+config.read('config.ini')
+RECHECK_TIME = int(config['SCRAPING']['RecheckTime'])
 
 BCAMPURL = 'https://{ARTIST}.bandcamp.com'
 
@@ -61,6 +68,17 @@ def cowdog(earl, loc='artist_tags', loops=4, n=0):  # 'earl' like 'url'
 
 def get_album_covers(tag, loc='./covers/'):
     url = BCAMPURL.replace('{ARTIST}', tag)
+    session = Session()
+
+    # Check to see if the store has been fully scraped in the last RECHECK_TIME hours.
+    previous_dates = list(session.query(Store.created_date).filter(Store.store_name == tag))
+    if previous_dates:
+        if (datetime.datetime.utcnow() - previous_dates[0].created_date).total_seconds() / 3600 < RECHECK_TIME:
+            return True
+        else:
+            session.query(Store.created_date).delete()
+            session.commit()
+
     lib = requests.get(url)
     soup = BeautifulSoup(lib.text, 'html.parser')
     albums = soup.find('div', class_='leftMiddleColumns')
@@ -80,7 +98,6 @@ def get_album_covers(tag, loc='./covers/'):
         except KeyError:
             pass
 
-    session = Session()
     for album in album_locs:
         if list(session.query(Album.url).filter(Album.url == album)):
             continue
@@ -101,7 +118,7 @@ def get_album_covers(tag, loc='./covers/'):
         soup = BeautifulSoup(alb.text, 'html.parser')
         try:
             art = soup.find('div', id='tralbumArt')
-            # Fucking noisecore artists trying to be twee by having an empty file as their album art ruining everything.
+            # F***ing noisecore artists trying to be twee by having an empty file as their album art ruining everything.
             if art.find("div", id="missing-tralbum-art"):
                 continue
             imgloc = art.find('a')['href']
@@ -136,6 +153,12 @@ def get_album_covers(tag, loc='./covers/'):
             im = im.convert('RGB')
         im.save(os.path.join(loc, album_id.hex + '.jpg'))
         session.commit()
+
+    store_obj = Store(
+        store_name=tag
+    )
+    session.add(store_obj)
+    session.commit()
 
     return True
 

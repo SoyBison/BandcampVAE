@@ -1,5 +1,6 @@
-from sqlalchemy import create_engine, Column, String, MetaData, Table, inspect
+from sqlalchemy import create_engine, Column, String, DateTime
 import configparser
+import datetime
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 config = configparser.ConfigParser()
@@ -31,4 +32,12 @@ class Album(Base):
         return f"<Album(title={self.title}, artist={self.artist})>"
 
 
+class Store(Base):
+    __tablename__ = 'stores'
+
+    store_name = Column(String(255), primary_key=True, unique=True)
+    created_date = Column(DateTime, default=datetime.datetime.utcnow())
+
+
 Album.__table__.create(bind=ENGINE, checkfirst=True)
+Store.__table__.create(bind=ENGINE, checkfirst=True)
