@@ -74,6 +74,7 @@ def get_album_covers(tag, loc='./covers/'):
     previous_dates = list(session.query(Store.created_date).filter(Store.store_name == tag))
     if previous_dates:
         if (datetime.datetime.utcnow() - previous_dates[0].created_date).total_seconds() / 3600 < RECHECK_TIME:
+            session.close()
             return True
         else:
             session.query(Store.created_date).filter(Store.store_name == tag).delete()
@@ -85,6 +86,7 @@ def get_album_covers(tag, loc='./covers/'):
     try:
         albums = albums.find_all('a', class_=None)
     except AttributeError:
+        session.close()
         return
     album_locs = []
     for a in albums:
@@ -159,6 +161,7 @@ def get_album_covers(tag, loc='./covers/'):
     )
     session.add(store_obj)
     session.commit()
+    session.close()
 
     return True
 
