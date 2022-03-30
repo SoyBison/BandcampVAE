@@ -76,7 +76,7 @@ def get_album_covers(tag, loc='./covers/'):
         if (datetime.datetime.utcnow() - previous_dates[0].created_date).total_seconds() / 3600 < RECHECK_TIME:
             return True
         else:
-            session.query(Store.created_date).delete()
+            session.query(Store.created_date).filter(Store.store_name == tag).delete()
             session.commit()
 
     lib = requests.get(url)
