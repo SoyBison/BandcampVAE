@@ -35,6 +35,9 @@ BCAMPURL = 'https://{ARTIST}.bandcamp.com'
 def load_artist_tags(loc='artist_tags'):
     with open(loc, 'r') as f:
         x = f.read().split('\n')
+    x = set(x)
+    while "" in x:
+        x.remove("")
     return x
 
 
@@ -167,13 +170,25 @@ def get_album_covers(tag, loc='./covers/'):
 
 
 def album_cover_scrape(cover_loc='./covers/', artist_loc='artist_tags'):
+
+    def date_selector(dt: datetime.datetime):
+        seconds = (datetime.datetime.utcnow() - dt).total_seconds()
+        return (seconds // 3600) < RECHECK_TIME
+
     # pool = mp.Pool()
     worker = partial(get_album_covers, loc=cover_loc)
     artists = load_artist_tags(artist_loc)
+    session = Session()
+
+    # Check to see if the store has been fully scraped in the last RECHECK_TIME hours.
+    previous_dates = list(session.query(Store.created_date, Store.store_name))
+    seen_artists = {b for a, b in previous_dates if date_selector(a)}
+
     # list(pool.imap(worker, artists))
-    for a in tqdm(artists):
+    target_artists = artists - seen_artists
+    for a in tqdm(target_artists):
         worker(a)
-        time.sleep(0.5)
+
     return True
 
 
