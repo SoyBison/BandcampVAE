@@ -1,10 +1,19 @@
-from sqlalchemy import create_engine, Column, String, DateTime
+from torch.utils.data import DataLoader, Dataset
+from abc import abstractmethod
+from torch import Tensor
+import json
+import numpy as np
+from sqlalchemy import create_engine
+from torchvision.io import read_image
+import pandas as pd
 import configparser
-import datetime
-from sqlalchemy.orm import declarative_base, sessionmaker
+import os
+from gensim.models import Word2Vec
+
 
 config = configparser.ConfigParser()
 config.read('config.ini')
+COVER_LOC = config['IMAGES']['ImageLocation']
 dbconf = config["DATABASE"]
 uname = dbconf['UserName']
 pword = dbconf['Password']
@@ -13,31 +22,39 @@ dname = dbconf['Database']
 connstring = f'mysql+pymysql://{uname}:{pword}@{addrs}/{dname}?charset=utf8mb4'
 ENGINE = create_engine(connstring)
 
-Base = declarative_base()
-Session = sessionmaker(bind=ENGINE)
+
+class BandcampDatasetBase(Dataset):
+    def __init__(self, engine=ENGINE, loc=COVER_LOC, transform=None):
+        self.df = pd.read_sql('SELECT * FROM albums', engine)
+        self.img_dir = loc
+        self.transform = transform
+        self.img_lines = self.df['id'] + '.jpg'
+
+    def __len__(self):
+        return len(self.img_lines)
+
+    def get_img(self, item):
+        img_path = os.path.join(self.img_dir, self.img_lines[item])
+        image = read_image(img_path).moveaxis([0, 1, 2], [-1, -3, -2])
+        if self.transform:
+            image = self.transform(image)
+        return image
+
+    @abstractmethod
+    def __getitem__(self, item):
+        raise NotImplementedError
 
 
-class Album(Base):
-    __tablename__ = 'albums'
+class BandcampTagDataset(BandcampDatasetBase):
+    def __init__(self, **kwargs):
+        super(BandcampTagDataset, self).__init__(**kwargs)
+        self.tag_jsons = self.df['tags']
+        self.w2v_model = Word2Vec.load('./models/tags.model')
 
-    id = Column(String(255), primary_key=True, unique=True)
-    artist = Column(String(2048))
-    title = Column(String(2048))
-    tags = Column(String(1024))
-    url_title = Column(String(255))
-    store = Column(String(255))
-    url = Column(String(255))
-
-    def __repr__(self):
-        return f"<Album(title={self.title}, artist={self.artist})>"
-
-
-class Store(Base):
-    __tablename__ = 'stores'
-
-    store_name = Column(String(255), primary_key=True, unique=True)
-    created_date = Column(DateTime, default=datetime.datetime.utcnow())
-
-
-Album.__table__.create(bind=ENGINE, checkfirst=True)
-Store.__table__.create(bind=ENGINE, checkfirst=True)
+    def __getitem__(self, item):
+        image = self.get_img(item)
+        tags = self.tag_jsons.iloc[item]
+        tag_list = json.loads(tags)
+        tag_list = np.concatenate([s.split(' ') for s in tag_list])
+        cbow = np.mean(self.w2v_model.wv[tag_list], axis=0)
+        return image, cbow

@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 /config.ini
 artist_tags
+/tags_sentences.txt

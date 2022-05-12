@@ -19,7 +19,7 @@ import seaborn as sns
 import colorsys
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
-from data import Album, Session, Store
+from database import Album, Session, Store
 import uuid
 import time
 import configparser
@@ -28,6 +28,7 @@ import configparser
 config = configparser.ConfigParser()
 config.read('config.ini')
 RECHECK_TIME = int(config['SCRAPING']['RecheckTime'])
+COVER_LOC = config['IMAGES']['ImageLocation']
 
 BCAMPURL = 'https://{ARTIST}.bandcamp.com'
 
@@ -344,4 +345,4 @@ if __name__ == '__main__':
     # for t in tags:
     #     collect_targets(t)
     # mass_get_artists()
-    album_cover_scrape(cover_loc='/home/coen/Remote/Data/bandcamp/covers/')
+    album_cover_scrape(cover_loc=COVER_LOC)
